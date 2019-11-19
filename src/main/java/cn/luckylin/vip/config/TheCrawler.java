@@ -42,7 +42,7 @@ public class TheCrawler implements PageProcessor {
         //获取最大的page
         String pageMax = this.judgePage(nodes1.get(nodes1.size() - 1));
         System.out.println("pageMax = " + pageMax);
-
+        System.out.println("-------");
     }
 
     @Override
