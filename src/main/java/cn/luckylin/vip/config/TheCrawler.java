@@ -1,5 +1,6 @@
 package cn.luckylin.vip.config;
 
+import cn.luckylin.vip.config.error.HttpClientDownloader;
 import cn.luckylin.vip.config.redis.CacheUtils;
 import cn.luckylin.vip.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
+import us.codecraft.webmagic.scheduler.RedisScheduler;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 
@@ -28,7 +30,8 @@ public class TheCrawler implements PageProcessor {
     //设置全局爬虫的配置，重试次数，间隔时间等等
     private Site site = Site.me()
             .setRetryTimes(3)
-            .setSleepTime(1000);
+            .setSleepTime(10)
+            .setTimeOut(1000000);
 
     private static Integer maxPage;
 
@@ -127,9 +130,11 @@ public class TheCrawler implements PageProcessor {
     public static void main(String[] args) {
         //开启爬虫
         Spider.create(new TheCrawler())
-                .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-1.html")
-                .thread(3)
-                .addPipeline(new JsonFilePipeline("F:\\webmagic\\"))
+                .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-2.html")
+                .thread(5)
+                .setDownloader(new HttpClientDownloader())
+                //设置Redis存放链接，来去重链接
+                .setScheduler(new RedisScheduler("60.205.210.108"))
                 .run();
     }
 

@@ -7,7 +7,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.commands.JedisCommands;
+
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -651,48 +651,7 @@ public class RedisUtil {
     }
 //=============================lock============================
 
-    /**
-     * 加锁
-     *
-     * @param key
-     * @param expire
-     * @return
-     */
-    public boolean setLock(String key, String requestId, long expire) {
-        try {
-            RedisCallback<String> callback = (connection) -> {
-                JedisCommands commands = (JedisCommands) connection.getNativeConnection();
-//                return commands.set(key, requestId, "NX", "PX", expire);
-                return null;
-            };
-            String result = redisTemplate.execute(callback);
 
-            return !StringUtils.isEmpty(result);
-        } catch (Exception e) {
-            log.error("set redis occured an exception", e);
-        }
-        return false;
-    }
-
-    /**
-     * 得到锁
-     *
-     * @param key
-     * @return
-     */
-    public String getLock(String key) {
-        try {
-            RedisCallback<String> callback = (connection) -> {
-                JedisCommands commands = (JedisCommands) connection.getNativeConnection();
-                return commands.get(key);
-            };
-            String result = redisTemplate.execute(callback);
-            return result;
-        } catch (Exception e) {
-            log.error("get redis occured an exception", e);
-        }
-        return "";
-    }
 
     /**
      * 解锁
