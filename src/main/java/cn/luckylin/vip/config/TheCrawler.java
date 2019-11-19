@@ -1,8 +1,12 @@
 package cn.luckylin.vip.config;
 
+import cn.luckylin.vip.config.redis.CacheUtils;
+import cn.luckylin.vip.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
-import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.JsonFilePipeline;
@@ -19,13 +23,24 @@ import java.util.List;
  * @Date: 2019/11/18
  */
 @Slf4j
+@Component
 public class TheCrawler implements PageProcessor {
     //设置全局爬虫的配置，重试次数，间隔时间等等
     private Site site = Site.me()
             .setRetryTimes(3)
-            .setSleepTime(100);
+            .setSleepTime(1000);
 
     private static Integer maxPage;
+
+    //判断是否是页面的url
+    private final static String PGURL = "vod-index-pg-";
+
+    //判断是不是详情的url
+    private final static String DETAILURL = "vod-detail-id-";
+
+    //redis标题  www.zuidazy1.net
+    private final static String ZUIDAZY1 = "www.zuidazy1.net";
+
 
     /**
      * @Description: 爬虫的具体逻辑的编写【数据的过滤加抽取】
@@ -36,6 +51,29 @@ public class TheCrawler implements PageProcessor {
      */
     @Override
     public void process(Page page) {
+        //获取url判断使用哪个爬取方法
+        Selectable url = page.getUrl();
+        if (url == null) {
+            return;
+        }
+
+        //page爬取id
+        if (url.regex(PGURL).match()) {
+            this.pgProcess(page);
+        } else if (url.regex(DETAILURL).match()) {
+            System.out.println("爬取详情页面");
+        }
+
+    }
+
+    /**
+     * @Description: 爬取分页数据的id
+     * @Param: [page]
+     * @return: void
+     * @Author: zhouyulin
+     * @Date: 2019/11/19
+     */
+    private void pgProcess(Page page) {
         //获取一个html对象，来抽取结果
         Html html = page.getHtml();
 
@@ -58,12 +96,26 @@ public class TheCrawler implements PageProcessor {
         //过滤出所有的视频链接
         Selectable xpath = html.xpath("div[@class='xing_vb']/ul/li/span/a");
         //获得所有的视屏id
-        List<Integer> integers = this.ExtractingID(xpath);
-        page.putField("id", integers);
+        List<Integer> ids = this.ExtractingID(xpath);
         //如果当前页小于最大页，继续爬，如果等于或者大于那就停止
-        if (pageNum<maxPage) {
-            page.addTargetRequest("http://www.zuidazy1.net/?m=vod-index-pg-"+(pageNum+1)+".html");
+        if (pageNum < maxPage) {
+            page.addTargetRequest("http://www.zuidazy1.net/?m=vod-index-pg-" + (pageNum + 1) + ".html");
         }
+        //添加爬取详情的url
+        for (Integer id : ids) {
+            page.addTargetRequest("http://www.zuidazy1.net/?m=vod-detail-id-" + id + ".html");
+        }
+    }
+
+    /**
+    * @Description: 爬取详情页面
+    * @Param: [page]
+    * @return: void
+    * @Author: zhouyulin
+    * @Date: 2019/11/19
+    */
+    private void detailProcess(Page page) {
+
 
     }
 
@@ -95,9 +147,13 @@ public class TheCrawler implements PageProcessor {
             //取出匹配的链接
             Selectable selectable = nodes.get(i);
             System.out.println("selectable = " + selectable);
-            //匹配出所有的数字
-            Selectable regex = selectable.regex("(?<==vod-detail-id-).+?(?=\\.html\")");
-            temp.add(Integer.valueOf(regex.toString()));
+            //匹配出所有的数字id
+            String id = selectable.regex("(?<==vod-detail-id-).+?(?=\\.html\")").toString();
+            temp.add(Integer.valueOf(id.toString()));
+            //取出所有的标题，存入redis，来判断是否去重
+            String title = selectable.regex("(?<=\"_blank\">).+(?=</a>)").toString();
+            //存入redis，做过滤
+            CacheUtils.hset("www.zuidazy1.net", id, title);
         }
 
         return temp;
@@ -114,7 +170,7 @@ public class TheCrawler implements PageProcessor {
         Selectable regex = null;
         try {
             regex = selectable.regex("(?<=vod-index-pg-).+(?=\\.html)");
-            log.info("页数过滤完成，页数为：{}",regex.toString());
+            log.info("页数过滤完成，页数为：{}", regex.toString());
             return Integer.valueOf(regex.toString());
         } catch (Exception e) {
             log.info("过滤失败，出现异常建议直接-1");

@@ -6,6 +6,11 @@ spring:
     password: a14725800
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://60.205.210.108:3306/vip?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+  redis:
+    database: 0
+    host: 60.205.210.108
+    port: 6379
 logging:
   config:
   classpath: logback.xml
+
