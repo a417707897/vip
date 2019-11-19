@@ -22,7 +22,6 @@ class VipApplicationTests {
         Spider.create(new TheCrawler())
                 .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-1.html")
                 .thread(3)
-                .addPipeline(new JsonFilePipeline("F:\\webmagic\\"))
                 .run();
     }
 
