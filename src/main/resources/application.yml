@@ -5,7 +5,7 @@ spring:
     username: root
     password: a14725800
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://60.205.210.108:3306/mytestdb?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://60.205.210.108:3306/vip?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
 logging:
   config:
   classpath: logback.xml
