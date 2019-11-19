@@ -8,6 +8,8 @@ class VipApplicationTests {
 
     @Test
     void contextLoads() {
+        String s = "sss" + (1 + 1) + "sss";
+        System.out.println("s = " + s);
     }
 
 }
