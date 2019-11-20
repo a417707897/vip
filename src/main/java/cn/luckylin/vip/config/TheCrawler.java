@@ -9,6 +9,7 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +92,8 @@ public class TheCrawler implements PageProcessor {
             return;
         }
         //过滤出所有的视频链接
-        Selectable xpath = html.xpath("div[@class='xing_vb']/ul/li/span/a");
+        Selectable xpath = html.xpath("div[@class='xing_vb']/ul/li")
+                .regex("(?<=<li><span class=\"tt\">).+(?=</li>)");  //第二层正则过滤走其他的标签
         //获得所有的视屏id+视屏名称，做去重操作
         Map<String, String> tempMap = this.ExtractingID(xpath);
 
@@ -154,8 +156,13 @@ public class TheCrawler implements PageProcessor {
             //匹配出所有的数字id
             String id = selectable.regex("(?<==vod-detail-id-).+?(?=\\.html\")").toString();
             //取出所有的标题，存入redis，来判断是否去重
-            String title = selectable.regex("(?<=\"_blank\">).+(?=</a>)").toString();
-            tempMap.put(id, title);
+            //String title = selectable.regex("(?<=\"_blank\">).+(?=</a>)").toString();
+            //取出所有的更新时间
+            String date = selectable.regex("(?<=class=\"xing_vb7\">).+(?=</span>)|(?<=class=\"xing_vb6\">).+(?=</span>)")
+                    .toString()
+                    .trim();
+            System.out.println("date = " + date);
+            tempMap.put(id, date);
         }
 
         return tempMap;
