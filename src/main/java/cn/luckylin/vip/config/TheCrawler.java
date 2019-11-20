@@ -25,8 +25,8 @@ public class TheCrawler implements PageProcessor {
     //设置全局爬虫的配置，重试次数，间隔时间等等
     private Site site = Site.me()
             .setRetryTimes(3)
-            .setSleepTime(10)
-            .setTimeOut(1000000);
+            .setSleepTime(100)
+            .setTimeOut(10000);
 
     private static Integer maxPage;
 
@@ -94,7 +94,7 @@ public class TheCrawler implements PageProcessor {
         //过滤出所有的视频链接
         Selectable xpath = html.xpath("div[@class='xing_vb']/ul/li")
                 .regex("(?<=<li><span class=\"tt\">).+(?=</li>)");  //第二层正则过滤走其他的标签
-        //获得所有的视屏id+视屏名称，做去重操作
+        //获得所有的视屏id+date更新时间，做去重操作
         Map<String, String> tempMap = this.ExtractingID(xpath);
 
         //如果当前页小于最大页，继续爬，如果等于或者大于那就停止
@@ -103,9 +103,9 @@ public class TheCrawler implements PageProcessor {
         }
 
         /*
-         * 判断是否需要去爬取最新的数据
+         * 判断是否需要去爬取最新的数据，并且去重
          * key是id
-         * value是影视名称
+         * value是影视更新时间
          */
         tempMap.forEach((id, value) -> {
             //如果两个值任意一个为空，跳出本次循环
@@ -113,12 +113,16 @@ public class TheCrawler implements PageProcessor {
                 return;
             }
             //取除redis数据，做更新操作
-            String name = (String) CacheUtils.hget("www.zuidazy1.net", id);
+            String date = (String) CacheUtils.hget("www.zuidazy1.net", id);
             //如果value和name不一样说明有更新的内容，我们爬取详情页面
-            if (!value.equals(name)) {
+            if (!value.equals(date)) {
                 page.addTargetRequest("http://www.zuidazy1.net/?m=vod-detail-id-" + id + ".html");
                 //并且把缓存数据添加到redis
                 CacheUtils.hset("www.zuidazy1.net", id, value.trim());
+                //把更新的资源
+                if (StringUtils.isNoneEmpty(date)) {
+                    log.info("存入reids，id为{}, 以前的值{}, 现在的值{}",id,date,value);
+                }
             }
         });
     }
