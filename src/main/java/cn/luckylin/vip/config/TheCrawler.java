@@ -1,23 +1,17 @@
 package cn.luckylin.vip.config;
 
-import cn.luckylin.vip.config.error.HttpClientDownloader;
 import cn.luckylin.vip.config.redis.CacheUtils;
-import cn.luckylin.vip.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
-import us.codecraft.webmagic.Spider;
-import us.codecraft.webmagic.pipeline.JsonFilePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
-import us.codecraft.webmagic.scheduler.RedisScheduler;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
-
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description: 爬虫的具体配置
@@ -98,16 +92,33 @@ public class TheCrawler implements PageProcessor {
         }
         //过滤出所有的视频链接
         Selectable xpath = html.xpath("div[@class='xing_vb']/ul/li/span/a");
-        //获得所有的视屏id
-        List<Integer> ids = this.ExtractingID(xpath);
+        //获得所有的视屏id+视屏名称，做去重操作
+        Map<String, String> tempMap = this.ExtractingID(xpath);
+
         //如果当前页小于最大页，继续爬，如果等于或者大于那就停止
         if (pageNum < maxPage) {
             page.addTargetRequest("http://www.zuidazy1.net/?m=vod-index-pg-" + (pageNum + 1) + ".html");
         }
-        //添加爬取详情的url
-        for (Integer id : ids) {
-            page.addTargetRequest("http://www.zuidazy1.net/?m=vod-detail-id-" + id + ".html");
-        }
+
+        /*
+         * 判断是否需要去爬取最新的数据
+         * key是id
+         * value是影视名称
+         */
+        tempMap.forEach((id, value) -> {
+            //如果两个值任意一个为空，跳出本次循环
+            if (StringUtils.isEmpty(id) && StringUtils.isEmpty(value)) {
+                return;
+            }
+            //取除redis数据，做更新操作
+            String name = (String) CacheUtils.hget("www.zuidazy1.net", id);
+            //如果value和name不一样说明有更新的内容，我们爬取详情页面
+            if (!value.equals(name)) {
+                page.addTargetRequest("http://www.zuidazy1.net/?m=vod-detail-id-" + id + ".html");
+                //并且把缓存数据添加到redis
+                CacheUtils.hset("www.zuidazy1.net", id, value.trim());
+            }
+        });
     }
 
     /**
@@ -127,29 +138,27 @@ public class TheCrawler implements PageProcessor {
     }
 
     /**
-     * @Description: 抽取全部的url ID在做后面的处理
+     * @Description: 抽取全部的url ID+name在做后面的处理
      * @Param: [selectable]
      * @return: java.util.List<java.lang.Integer>
      * @Author: zhouyulin
      * @Date: 2019/11/18
      */
-    private List<Integer> ExtractingID(Selectable selectables) {
+    private Map<String, String> ExtractingID(Selectable selectables) {
         List<Selectable> nodes = selectables.nodes();
-        List<Integer> temp = new ArrayList<>();
+        Map<String, String> tempMap = new HashMap<>();
         for (int i = 0; i < nodes.size(); i++) {
             //取出匹配的链接
             Selectable selectable = nodes.get(i);
             System.out.println("selectable = " + selectable);
             //匹配出所有的数字id
             String id = selectable.regex("(?<==vod-detail-id-).+?(?=\\.html\")").toString();
-            temp.add(Integer.valueOf(id.toString()));
             //取出所有的标题，存入redis，来判断是否去重
             String title = selectable.regex("(?<=\"_blank\">).+(?=</a>)").toString();
-            //存入redis，做过滤
-            CacheUtils.hset("www.zuidazy1.net", id, title);
+            tempMap.put(id, title);
         }
 
-        return temp;
+        return tempMap;
     }
 
     /**

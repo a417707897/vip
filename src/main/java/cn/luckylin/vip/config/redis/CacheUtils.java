@@ -161,6 +161,17 @@ public class CacheUtils {
     }
 
     /**
+     * HashGet
+     *
+     * @param key  键 不能为null
+     * @param item 项 不能为null
+     * @return 值
+     */
+    public static Object hget(String key, String item) {
+        return cacheUtils.redisTemplate.opsForHash().get(key, item);
+    }
+
+    /**
      * 向一张hash表中放入数据,如果不存在将创建
      *
      * @param key   键
