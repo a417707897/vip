@@ -1,5 +1,6 @@
 package cn.luckylin.vip;
 
+import cn.luckylin.vip.config.Pipeline.ZuiDaZyPipeline;
 import cn.luckylin.vip.config.TheCrawler;
 import cn.luckylin.vip.config.error.HttpClientDownloader;
 import lombok.extern.slf4j.Slf4j;
@@ -22,8 +23,10 @@ class VipApplicationTests {
                 .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-1.html")
                 .thread(10)
                 .setDownloader(new HttpClientDownloader())
+                //指定保存结果操作对象
+                .addPipeline(new ZuiDaZyPipeline())
                 //设置Redis存放链接，来去重链接
-//                .setScheduler(new RedisScheduler("60.205.210.108"))
+                //.setScheduler(new RedisScheduler("60.205.210.108"))
                 .run();
     }
 

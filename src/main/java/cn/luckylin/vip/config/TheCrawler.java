@@ -64,7 +64,7 @@ public class TheCrawler implements PageProcessor {
         if (url.regex(PGURL).match()) {
             this.pgProcess(page);
         } else if (url.regex(DETAILURL).match()) {
-            System.out.println("爬取详情页面");
+            this.detailProcess(page);
         }
 
     }
@@ -111,31 +111,19 @@ public class TheCrawler implements PageProcessor {
     }
 
     /**
-    * @Description: 爬取详情页面
-    * @Param: [page]
-    * @return: void
-    * @Author: zhouyulin
-    * @Date: 2019/11/19
-    */
+     * @Description: 爬取详情页面
+     * @Param: [page]
+     * @return: void
+     * @Author: zhouyulin
+     * @Date: 2019/11/19
+     */
     private void detailProcess(Page page) {
-
-
+        page.putField("demo", "demo" + page.getUrl());
     }
 
     @Override
     public Site getSite() {
         return site;
-    }
-
-    public static void main(String[] args) {
-        //开启爬虫
-        Spider.create(new TheCrawler())
-                .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-2.html")
-                .thread(5)
-                .setDownloader(new HttpClientDownloader())
-                //设置Redis存放链接，来去重链接
-                .setScheduler(new RedisScheduler("60.205.210.108"))
-                .run();
     }
 
     /**
