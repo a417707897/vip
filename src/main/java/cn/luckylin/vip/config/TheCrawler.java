@@ -24,20 +24,20 @@ import java.util.Map;
 public class TheCrawler implements PageProcessor {
     //设置全局爬虫的配置，重试次数，间隔时间等等
     private Site site = Site.me()
-            .setRetryTimes(3)
-            .setSleepTime(100)
-            .setTimeOut(10000);
+            .setRetryTimes(4)
+            .setSleepTime(1000)
+            .setTimeOut(100000);
 
     private static Integer maxPage;
 
     //判断是否是页面的url
-    private final static String PGURL = "vod-index-pg-";
+    private final static String PGURL = "m=vod-index";
 
     //判断是不是详情的url
-    private final static String DETAILURL = "vod-detail-id-";
+    private final static String DETAILURL = "vod-detail-id";
 
     //redis标题  www.zuidazy1.net
-    private final static String ZUIDAZY1 = "www.zuidazy1.net";
+    private final static String ZUIDAZY2 = "zuidazy2.net";
 
 
     /**
@@ -76,12 +76,13 @@ public class TheCrawler implements PageProcessor {
         Html html = page.getHtml();
 
         //获取当前page
-        Integer pageNum = this.judgePage(page.getUrl());
+        Integer pageNum = this.judgePage(html);
         if (1 == pageNum) {
             //如果是第一页求出最大页//获取明前最大的page，就是尾页的href里的值
-            List<Selectable> nodes1 = html.xpath("//div[@class='pages']/a").nodes();
-            //获取最大的page
-            maxPage = this.judgePage(nodes1.get(nodes1.size() - 1));
+            List<Selectable> nodes = html.xpath("//div[@class='pages']/a")
+                    .regex("(?<=vod-index-pg-).+(?=\\.html)").nodes();
+            //获取最大的page  <a target="_self" href="/?m=vod-index-pg-792.html" class="pagelink_a">尾页</a>
+            maxPage = Integer.valueOf(nodes.get(nodes.size() - 1).toString());
             log.info("最大page求得为：{}", maxPage);
             if (maxPage == -1) {
                 //先直接返回，不做处理；
@@ -99,7 +100,7 @@ public class TheCrawler implements PageProcessor {
 
         //如果当前页小于最大页，继续爬，如果等于或者大于那就停止
         if (pageNum < maxPage) {
-            page.addTargetRequest("http://www.zuidazy1.net/?m=vod-index-pg-" + (pageNum + 1) + ".html");
+            page.addTargetRequest("http://zuidazy2.net/?m=vod-index-pg-" + (pageNum + 1) + ".html");
         }
 
         /*
@@ -113,15 +114,15 @@ public class TheCrawler implements PageProcessor {
                 return;
             }
             //取除redis数据，做更新操作
-            String date = (String) CacheUtils.hget("www.zuidazy1.net", id);
+            String date = (String) CacheUtils.hget(ZUIDAZY2, id);
             //如果value和name不一样说明有更新的内容，我们爬取详情页面
             if (!value.equals(date)) {
-                page.addTargetRequest("http://www.zuidazy1.net/?m=vod-detail-id-" + id + ".html");
+                page.addTargetRequest("http://zuidazy2.net/?m=vod-detail-id-" + id + ".html");
                 //并且把缓存数据添加到redis
-                CacheUtils.hset("www.zuidazy1.net", id, value.trim());
-                //把更新的资源
+                CacheUtils.hset(ZUIDAZY2, id, value.trim());
+                //把更新的资源日志打印出来
                 if (StringUtils.isNoneEmpty(date)) {
-                    log.info("存入reids，id为{}, 以前的值{}, 现在的值{}",id,date,value);
+                    log.info("存入reids，id为{}, 以前的值{}, 现在的值{}", id, date, value);
                 }
             }
         });
@@ -182,7 +183,10 @@ public class TheCrawler implements PageProcessor {
     public Integer judgePage(Selectable selectable) {
         Selectable regex = null;
         try {
-            regex = selectable.regex("(?<=vod-index-pg-).+(?=\\.html)");
+//            regex = selectable.regex("(?<=<span class=\"pagenow\">).+(?=</span>");
+            regex = selectable.xpath("span[@class='pagenow']")
+                    .regex("(?<=\"pagenow\">).+(?=</span>)");
+            System.out.println("regex = " + regex);
             log.info("页数过滤完成，页数为：{}", regex.toString());
             return Integer.valueOf(regex.toString());
         } catch (Exception e) {

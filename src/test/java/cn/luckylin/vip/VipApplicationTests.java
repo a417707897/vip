@@ -28,8 +28,8 @@ class VipApplicationTests {
     void test01() {
         //开启爬虫
         Spider.create(new TheCrawler())
-                .addUrl("http://www.zuidazy1.net/?m=vod-index-pg-1.html")
-                .thread(10)
+                .addUrl("http://zuidazy2.net/?m=vod-index.html")
+                .thread(8)
                 .setDownloader(new HttpClientDownloader())
                 //指定保存结果操作对象
                 .addPipeline(new ZuiDaZyPipeline())
