@@ -157,7 +157,6 @@ public class TheCrawler implements PageProcessor {
         for (int i = 0; i < nodes.size(); i++) {
             //取出匹配的链接
             Selectable selectable = nodes.get(i);
-            System.out.println("selectable = " + selectable);
             //匹配出所有的数字id
             String id = selectable.regex("(?<==vod-detail-id-).+?(?=\\.html\")").toString();
             //取出所有的标题，存入redis，来判断是否去重
@@ -166,7 +165,6 @@ public class TheCrawler implements PageProcessor {
             String date = selectable.regex("(?<=class=\"xing_vb7\">).+(?=</span>)|(?<=class=\"xing_vb6\">).+(?=</span>)")
                     .toString()
                     .trim();
-            System.out.println("date = " + date);
             tempMap.put(id, date);
         }
 
