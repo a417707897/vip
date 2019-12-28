@@ -1,8 +1,11 @@
 package cn.luckylin.vip.config;
 
 import cn.luckylin.vip.bean.MovieDetails;
+import cn.luckylin.vip.bean.MovieUrl;
+import cn.luckylin.vip.bean.Movies;
 import cn.luckylin.vip.config.redis.CacheUtils;
 import cn.luckylin.vip.utils.DateUtils;
+import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,8 @@ public class TheCrawler implements PageProcessor {
 
     //redis标题  www.zuidazy1.net
     private final static String ZUIDAZY2 = "zuidazy2.net";
+
+    Movies movies = null;
 
     /**
      * @Description: 爬虫的具体逻辑的编写【数据的过滤加抽取】
@@ -140,9 +145,13 @@ public class TheCrawler implements PageProcessor {
      * @Date: 2019/11/19
      */
     private void detailProcess(Page page) {
+        MovieUrl movieUrl = null;
         try {
+            movies = new Movies();
+            String movieId = page.getUrl().regex("(?<==vod-detail-id-).+?(?=\\.html)").toString();
             //详情对象
             MovieDetails movieDetails = new MovieDetails();
+            movieDetails.setMovieId(movieId);
             //获取爬取的html对象来抽取结果
             Html html = page.getHtml();
 
@@ -169,7 +178,6 @@ public class TheCrawler implements PageProcessor {
                 movieDetails.setScore(0.0);
             }
             /*影视具体信息*/
-            String s = xpathDetail.xpath("div[@class='vodinfobox']").toString();
             List<Selectable> nodes = xpathDetail.xpath("div[@class='vodinfobox']")
                     .regex("(?<=<li>).+?(?=</li>)|(?<=<li class=\"sm\">).+?(?=</li>)").nodes();
             if (nodes != null && nodes.size() > 0) {
@@ -183,7 +191,29 @@ public class TheCrawler implements PageProcessor {
                     .regex("(?<=\">).+").toString();
             movieDetails.setIntroduction(introduction);
 
+            movies.setMovieDetails(movieDetails);
             /* 爬取影视链接 */
+            Selectable xpathUrl = html.xpath("div[@class='vodplayinfo']");
+            //播放类型：zuidam3u8
+            //获取url
+            List<Selectable> urls = xpathUrl.xpath("div[@id='play_1']/ul").regex("(?<=<li>).+?(?=</li>)").nodes();
+            if (urls != null && urls.size() > 0) {
+                for (int i = 0; i < urls.size(); i++) {
+                    movieUrl = new MovieUrl();
+                    Selectable selectable = urls.get(i);
+                    String url1 = selectable.regex("(?<=value=\").+?(?=\")").toString();
+                    //添加对象
+                    movieUrl.setFlag("m3u8");
+                    movieUrl.setUrl(url1);
+                    movieUrl.setSetNum(i+1);
+                    movieUrl.setCreateDate(new Date());
+                    movieUrl.setMovieId(movieId);
+                    //存入list
+                    movies.getM3u8Url().add(movieUrl);
+                }
+            }
+            //播放类型直连的
+
 
 
             System.out.println("movieDetails = " + movieDetails);

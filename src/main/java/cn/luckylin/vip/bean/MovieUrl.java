@@ -24,7 +24,7 @@ public class MovieUrl {
 
     //影视集数
     @Column(name = "SET_NUM")
-    private String setNum;
+    private Integer setNum;
 
     //影视集数对应的url
     @Column(name = "URL")
