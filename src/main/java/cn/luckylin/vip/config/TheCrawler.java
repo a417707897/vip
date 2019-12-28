@@ -1,8 +1,11 @@
 package cn.luckylin.vip.config;
 
+import cn.luckylin.vip.bean.MovieDetails;
 import cn.luckylin.vip.config.redis.CacheUtils;
+import cn.luckylin.vip.utils.DateUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -10,9 +13,11 @@ import us.codecraft.webmagic.processor.PageProcessor;
 import us.codecraft.webmagic.selector.Html;
 import us.codecraft.webmagic.selector.Selectable;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @Description: 爬虫的具体配置
@@ -38,7 +43,6 @@ public class TheCrawler implements PageProcessor {
 
     //redis标题  www.zuidazy1.net
     private final static String ZUIDAZY2 = "zuidazy2.net";
-
 
     /**
      * @Description: 爬虫的具体逻辑的编写【数据的过滤加抽取】
@@ -136,12 +140,116 @@ public class TheCrawler implements PageProcessor {
      * @Date: 2019/11/19
      */
     private void detailProcess(Page page) {
-        page.putField("demo", "demo" + page.getUrl());
+        try {
+            //详情对象
+            MovieDetails movieDetails = new MovieDetails();
+            //获取爬取的html对象来抽取结果
+            Html html = page.getHtml();
+
+            /*详情的xpath*/
+            Selectable xpathDetail = html.xpath("div[@class='vodBox']");
+            //主题详情内容爬取
+            /* 封面url */
+            String url = xpathDetail.xpath("div[@class='vodImg']")
+                    .regex("(?<=src=\").+?(?=\")").toString();
+            movieDetails.setImageUrl(url);
+            /*影视标题*/
+            String title = xpathDetail.xpath("div[@class='vodh']")
+                    .regex("(?<=<h2>).+?(?=</h2>)").toString();
+            movieDetails.setTitle(title);
+            /*影视更新集数*/
+            String smallNode = xpathDetail.xpath("div[@class='vodh']/span")
+                    .regex("(?<=<span>).+?(?=</span>)").toString();
+            movieDetails.setSmallNote(smallNode);
+            /*影视评分*/
+            String score = xpathDetail.xpath("div[@class='vodh']").regex("(?<=<label>).+?(?=</label>)").toString();
+            if (score != null) {
+                movieDetails.setScore(Double.valueOf(score));
+            } else {
+                movieDetails.setScore(0.0);
+            }
+            /*影视具体信息*/
+            String s = xpathDetail.xpath("div[@class='vodinfobox']").toString();
+            List<Selectable> nodes = xpathDetail.xpath("div[@class='vodinfobox']")
+                    .regex("(?<=<li>).+?(?=</li>)|(?<=<li class=\"sm\">).+?(?=</li>)").nodes();
+            if (nodes != null && nodes.size() > 0) {
+                for (int i = 0; i < nodes.size(); i++) {
+                    //whitch处理数据
+                    this.switchProcessData(movieDetails, nodes.get(i));
+                }
+            }
+            //影视介绍爬取
+            String introduction = xpathDetail.regex("(?<=<span class=\"more\").+?(?=</span>)")
+                    .regex("(?<=\">).+").toString();
+            movieDetails.setIntroduction(introduction);
+
+            /* 爬取影视链接 */
+
+
+            System.out.println("movieDetails = " + movieDetails);
+
+        } catch (Exception e) {
+            log.info("爬取详情页面出现异常，url为【{}】", page.getUrl());
+            e.printStackTrace();
+        }
+
+
     }
 
     @Override
     public Site getSite() {
         return site;
+    }
+
+    /**
+     * @Description: whitch处理数据
+     * @Param: [movieDetails, selectable]
+     * @return: void
+     * @Author: zhouyulin
+     * @Date: 2019/12/28
+     */
+    private void switchProcessData(MovieDetails movieDetails, Selectable selectable) {
+        String key = selectable.regex(".+?(?=：)").toString().trim();
+        String value = selectable.regex("(?<=<span>).+?(?=<)").toString();
+        //有些数据不需要处理了，我们过滤即可
+        String eq = "别名_今日播放量_总播放量_总评分数_评分次数";
+        if (eq.contains(key)) {
+            return;
+        }
+        //不同的数据不同的存储
+        switch (key) {
+            case "导演":
+                movieDetails.setDirector(value);
+                break;
+            case "主演":
+                movieDetails.setActor(value);
+                break;
+            case "类型":
+                movieDetails.setType(value);
+                break;
+            case "地区":
+                movieDetails.setArea(value);
+                break;
+            case "语言":
+                movieDetails.setLanguage(value);
+                break;
+            case "上映":
+                Date date = DateUtils.processDifferentDateByStr(value);
+                movieDetails.setReleaseTime(date);
+                break;
+            case "片长":
+                if (value != null) {
+                    movieDetails.setMovieLength(Integer.valueOf(value));
+                } else {
+                    movieDetails.setMovieLength(0);
+                }
+                break;
+            case "更新":
+                movieDetails.setMovieUpdateTime(DateUtils.processDifferentDateByStr(value));
+                break;
+            default:
+                log.info("没有张对应的处理结果");
+        }
     }
 
     /**

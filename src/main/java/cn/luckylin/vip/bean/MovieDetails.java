@@ -41,7 +41,11 @@ public class MovieDetails {
 
     //影视评分
     @Column(name = "SCORE")
-    private String score;
+    private Double score;
+
+    //小说明
+    @Column(name = "SMALL_NOTE")
+    private String smallNote;
 
     //影视类型
     @Column(name = "TYPE")
