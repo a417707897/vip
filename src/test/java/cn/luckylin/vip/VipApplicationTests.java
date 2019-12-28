@@ -1,9 +1,13 @@
 package cn.luckylin.vip;
 
+import cn.luckylin.vip.bean.MovieDetails;
+import cn.luckylin.vip.bean.MovieUrl;
 import cn.luckylin.vip.config.Pipeline.ZuiDaZyPipeline;
 import cn.luckylin.vip.config.TheCrawler;
 import cn.luckylin.vip.config.error.HttpClientDownloader;
 import cn.luckylin.vip.config.redis.CacheUtils;
+import cn.luckylin.vip.mapper.MovieDetailsMapper;
+import cn.luckylin.vip.mapper.MovieUrlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +20,9 @@ import org.springframework.web.client.RestTemplate;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.scheduler.RedisScheduler;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
@@ -23,6 +30,12 @@ class VipApplicationTests {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private MovieDetailsMapper movieDetailsMapper;
+
+    @Autowired
+    private MovieUrlMapper movieUrlMapper;
 
     @Test
     void test01() {
@@ -54,8 +67,33 @@ class VipApplicationTests {
         CacheUtils.hset("demo", "demo", "1");
         CacheUtils.hset("demo", "demo", "2");
         CacheUtils.hset("demo", "demo", "3");
+    }
+
+    @Test
+    public void movieDetailTest(){
+        List<MovieDetails> movieDetails = movieDetailsMapper.selectAll();
+        if (movieDetails != null && movieDetails.size() > 0) {
+            for (int i = 0; i < movieDetails.size(); i++) {
+                System.out.println("movieDetails = " + movieDetails.get(i));
+            }
+        }
+    }
+
+    @Test
+    public void movieUrl(){
+        List<MovieUrl> movieUrls = movieUrlMapper.selectAll();
+        if (movieUrls != null && movieUrls.size() > 0) {
+            movieUrls.forEach(new Consumer<MovieUrl>() {
+                @Override
+                public void accept(MovieUrl movieUrl) {
+                    System.out.println("movieUrl = " + movieUrl);
+                }
+            });
+        }
+
 
 
     }
+
 
 }

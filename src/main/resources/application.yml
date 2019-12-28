@@ -5,7 +5,7 @@ spring:
     username: root
     password: a14725800
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://60.205.210.108:3306/vip?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://60.205.210.108:3306/movie?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
   redis:
     database: 0
     host: 60.205.210.108
@@ -13,4 +13,14 @@ spring:
 logging:
   config:
   classpath: logback.xml
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  params: count=countsql
+mybatis:
+  # 指定全局配置文件位置
+  config-location: classpath:mybatis/mybatis-config.xml
+  # 指定sql映射文件位置
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  type-aliases-package: cn.luckyin.vip.bean
 

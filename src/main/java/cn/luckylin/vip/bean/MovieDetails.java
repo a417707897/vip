@@ -57,15 +57,15 @@ public class MovieDetails {
 
     //上映时间
     @Column(name = "RELEASE_TIME")
-    private String releaseTime;
+    private Date releaseTime;
 
     //影视片长
     @Column(name = "MOVIE_LENGTH")
-    private String movieLength;
+    private Integer movieLength;
 
     //影视更新时间
     @Column(name = "MOVIE_UPDATE_TIME")
-    private String movieUpdateTime;
+    private Date movieUpdateTime;
 
     //影视介绍
     @Column(name = "INTRODUCTION")
@@ -73,11 +73,11 @@ public class MovieDetails {
 
     //影视总播放量
     @Column(name = "TOTAL_PLAYBACK")
-    private String totalPlayback;
+    private Integer totalPlayback;
 
     //今日播放量
     @Column(name = "TODAY_PLAYBACK")
-    private String todayPlayback;
+    private Integer todayPlayback;
 
     //创建时间
     @Column(name = "CREATE_DATE")
