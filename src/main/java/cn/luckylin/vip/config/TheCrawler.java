@@ -196,24 +196,43 @@ public class TheCrawler implements PageProcessor {
             Selectable xpathUrl = html.xpath("div[@class='vodplayinfo']");
             //播放类型：zuidam3u8
             //获取url
-            List<Selectable> urls = xpathUrl.xpath("div[@id='play_1']/ul").regex("(?<=<li>).+?(?=</li>)").nodes();
-            if (urls != null && urls.size() > 0) {
-                for (int i = 0; i < urls.size(); i++) {
+            List<Selectable> play_1 = xpathUrl.xpath("div[@id='play_1']/ul")
+                    .regex("(?<=<li>).+?(?=</li>)").nodes();
+            if (play_1 != null && play_1.size() > 0) {
+                for (int i = 0; i < play_1.size(); i++) {
                     movieUrl = new MovieUrl();
-                    Selectable selectable = urls.get(i);
+                    Selectable selectable = play_1.get(i);
                     String url1 = selectable.regex("(?<=value=\").+?(?=\")").toString();
                     //添加对象
                     movieUrl.setFlag("m3u8");
                     movieUrl.setUrl(url1);
-                    movieUrl.setSetNum(i+1);
+                    movieUrl.setSetNum(i + 1);
                     movieUrl.setCreateDate(new Date());
                     movieUrl.setMovieId(movieId);
                     //存入list
                     movies.getM3u8Url().add(movieUrl);
                 }
             }
-            //播放类型直连的
+            //播放类型直连的 ll  play_2
+            /* ll */
+            List<Selectable> play_2 = xpathUrl.xpath("div[@id='play_2']/ul")
+                    .regex("(?<=<li>).+?(?=</li>)").nodes();
+            if (play_2 != null && play_2.size() > 0) {
+                for (int i = 0; i < play_2.size(); i++) {
+                    movieUrl = new MovieUrl();
+                    Selectable selectable = play_2.get(i);
+                    String url1 = selectable.regex("(?<=value=\").+?(?=\")").toString();
+                    //添加对象
+                    movieUrl.setFlag("ll");
+                    movieUrl.setUrl(url1);
+                    movieUrl.setSetNum(i + 1);
+                    movieUrl.setCreateDate(new Date());
+                    movieUrl.setMovieId(movieId);
+                    //存入list
+                    movies.getLlUrl().add(movieUrl);
+                }
 
+            }
 
 
             System.out.println("movieDetails = " + movieDetails);

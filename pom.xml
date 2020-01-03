@@ -50,11 +50,11 @@
         </dependency>
 
         <!-- log -->
-        <dependency>
+ <!--       <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
             <version>2.2.0.RELEASE</version>
-        </dependency>
+        </dependency>-->
 
         <!-- webmagic 核心包 -->
         <dependency>
@@ -88,11 +88,11 @@
             </exclusions>
         </dependency>
         <!-- webmagic-selenium 对selenium支持 -->
-        <dependency>
+       <!-- <dependency>
             <groupId>us.codecraft</groupId>
             <artifactId>webmagic-selenium</artifactId>
             <version>0.7.3</version>
-        </dependency>
+        </dependency>-->
         <!-- commons-collections -->
         <dependency>
             <groupId>commons-collections</groupId>
