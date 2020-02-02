@@ -3,9 +3,9 @@ server:
 spring:
   datasource:
     username: root
-    password: a14725800
+    password: xxxx
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://60.205.210.108:3306/movie?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://xxxx:3306/movie?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       minimum-idle: 5
@@ -18,9 +18,9 @@ spring:
       connection-test-query: SELECT 1
   redis:
     database: 0
-    host: 60.205.210.108
-    port: 6369
-    password: a14725800
+    host: xxxxx
+    port: 6379
+    password: xxxxx
 pagehelper:
   helper-dialect: mysql
   reasonable: true
