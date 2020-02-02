@@ -1,0 +1,36 @@
+server:
+  port: 8888
+spring:
+  datasource:
+    username: root
+    password: a14725800
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://60.205.210.108:3306/movie?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 15
+      auto-commit: true
+      idle-timeout: 30000
+      pool-name: DatebookHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  redis:
+    database: 0
+    host: 60.205.210.108
+    port: 6369
+    password: a14725800
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  params: count=countsql
+mybatis:
+  # 指定全局配置文件位置
+  config-location: classpath:mybatis/mybatis-config.xml
+  # 指定sql映射文件位置
+  mapper-locations: classpath:mybatis/mapper/*.xml
+  type-aliases-package: cn.luckyin.vip.bean
+logging:
+  config:
+  classpath: logback.xml
